@@ -1,5 +1,5 @@
 export async function onRequest(context) {
-  const APPS_SCRIPT_URL = "https://script.google.com/a/macros/humbertoquintero.com/s/AKfycbwbTqsFn3OhRdYo24PJGvR5D2nL_nsmHtHazeh1DwI2cexcWbwTuEpTfuajMVkMcgbS/exec";
+  const APPS_SCRIPT_URL = "TU_URL_DE_APPS_SCRIPT";
 
   try {
     const request = context.request;
@@ -12,54 +12,44 @@ export async function onRequest(context) {
       targetUrl.searchParams.set("action", action);
 
       const response = await fetch(targetUrl.toString(), {
-        method: "GET",
-        redirect: "follow"
+        method: "GET"
       });
 
-      const text = await response.text();
+      const data = await response.json();
 
-      return new Response(text, {
-        status: response.status,
+      return new Response(JSON.stringify(data), {
         headers: {
-          "Content-Type": "application/json; charset=utf-8",
+          "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*"
         }
       });
     }
 
     if (request.method === "POST") {
-      const body = await request.text();
+      const body = await request.json();
 
-      const response = await fetch(APPS_SCRIPT_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body,
-        redirect: "follow"
+      const targetUrl = new URL(APPS_SCRIPT_URL);
+
+      // 🔴 AQUÍ ESTÁ LA CLAVE
+      Object.keys(body).forEach(key => {
+        targetUrl.searchParams.set(key, body[key]);
       });
 
-      const text = await response.text();
+      const response = await fetch(targetUrl.toString(), {
+        method: "GET"
+      });
 
-      return new Response(text, {
-        status: response.status,
+      const data = await response.json();
+
+      return new Response(JSON.stringify(data), {
         headers: {
-          "Content-Type": "application/json; charset=utf-8",
+          "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*"
         }
       });
     }
 
-    return new Response(JSON.stringify({
-      ok: false,
-      error: true,
-      message: "Método no permitido"
-    }), {
-      status: 405,
-      headers: {
-        "Content-Type": "application/json; charset=utf-8"
-      }
-    });
+    return new Response("Método no permitido", { status: 405 });
 
   } catch (error) {
     return new Response(JSON.stringify({
@@ -67,10 +57,7 @@ export async function onRequest(context) {
       error: true,
       message: String(error)
     }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json; charset=utf-8"
-      }
+      headers: { "Content-Type": "application/json" }
     });
   }
 }
