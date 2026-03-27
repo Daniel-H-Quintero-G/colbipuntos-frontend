@@ -651,27 +651,46 @@
        CARGA DE CONFIGURACIÓN
        Obtiene logos, redes, banners, WhatsApp, email y versión
        ========================= */
-    async function cargarConfig() {
+
+    <script>
+  async function cargarConfig() {
+    try {
+      const response = await fetch(`${API_BASE}?action=config&t=${Date.now()}`, {
+        method: "GET",
+        cache: "no-store"
+      });
+
+      const rawText = await response.text();
+      console.log("Respuesta cruda /api?action=config:", rawText);
+
+      let result;
       try {
-        const response = await fetch(`${API_BASE}?action=config`, {
-          method: "GET"
-        });
-
-        const result = await response.json();
-
-        if (!result.ok || !result.data) {
-          throw new Error(result.message || "No se pudo cargar la configuración");
-        }
-
-        webappConfig = result.data;
-        aplicarConfigEnPantalla();
-        iniciarRotacionBanners();
-
-      } catch (error) {
-        console.error("Error cargando configuración:", error);
+        result = JSON.parse(rawText);
+      } catch (parseError) {
+        console.error("No se pudo parsear JSON:", parseError);
+        alert("La API no devolvió JSON válido. Revisa la consola.");
+        return;
       }
-    }
 
+      console.log("JSON parseado:", result);
+
+      if (!result.ok || !result.data) {
+        console.error("La API respondió con error:", result);
+        alert("La API respondió con error: " + (result.message || "sin mensaje"));
+        return;
+      }
+
+      webappConfig = result.data;
+      aplicarConfigEnPantalla();
+      iniciarRotacionBanners();
+
+    } catch (error) {
+      console.error("Error cargando configuración:", error);
+      alert("Error cargando configuración. Revisa la consola.");
+    }
+  }
+</script>
+    
     /* =========================
        APLICAR CONFIG EN PANTALLA
        Inserta logos, links y versión en el HTML
