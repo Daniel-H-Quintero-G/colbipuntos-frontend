@@ -6,18 +6,20 @@ export async function onRequest(context) {
     const url = new URL(request.url);
 
     if (request.method === "GET") {
-      const action = url.searchParams.get("action") || "";
-
       const targetUrl = new URL(APPS_SCRIPT_URL);
-      targetUrl.searchParams.set("action", action);
 
-      const response = await fetch(targetUrl.toString(), {
-        method: "GET"
+      // 🔴 copiar TODOS los parámetros correctamente
+      url.searchParams.forEach((value, key) => {
+        if (value !== undefined && value !== null && value !== "") {
+          targetUrl.searchParams.set(key, value);
+        }
       });
 
-      const data = await response.json();
+      const response = await fetch(targetUrl.toString());
 
-      return new Response(JSON.stringify(data), {
+      const text = await response.text();
+
+      return new Response(text, {
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*"
@@ -27,21 +29,18 @@ export async function onRequest(context) {
 
     if (request.method === "POST") {
       const body = await request.json();
-
       const targetUrl = new URL(APPS_SCRIPT_URL);
 
-      // 🔴 AQUÍ ESTÁ LA CLAVE
-      Object.keys(body).forEach(key => {
-        targetUrl.searchParams.set(key, body[key]);
+      Object.entries(body).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          targetUrl.searchParams.set(key, String(value));
+        }
       });
 
-      const response = await fetch(targetUrl.toString(), {
-        method: "GET"
-      });
+      const response = await fetch(targetUrl.toString());
+      const text = await response.text();
 
-      const data = await response.json();
-
-      return new Response(JSON.stringify(data), {
+      return new Response(text, {
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*"
