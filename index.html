@@ -652,7 +652,7 @@
        Obtiene logos, redes, banners, WhatsApp, email y versión
        ========================= */
 
-    <script>
+  
   async function cargarConfig() {
     try {
       const response = await fetch(`${API_BASE}?action=config&t=${Date.now()}`, {
@@ -689,7 +689,7 @@
       alert("Error cargando configuración. Revisa la consola.");
     }
   }
-</script>
+
     
     /* =========================
        APLICAR CONFIG EN PANTALLA
