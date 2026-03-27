@@ -1,5 +1,5 @@
 export async function onRequest(context) {
-  const APPS_SCRIPT_URL = "TU_URL_DE_APPS_SCRIPT";
+  const APPS_SCRIPT_URL = "https://script.google.com/u/0/home/projects/16VKxS85WhkokbrJMSpQNbxZ4276GPVM_iK9fs6r0QpY6jukpHJsWzWGD/edit?pli=1";
 
   try {
     const request = context.request;
