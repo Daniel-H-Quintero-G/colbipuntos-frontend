@@ -1,138 +1,658 @@
-<script>
-  /* =========================
-     CONFIGURACIÓN GENERAL DEL FRONTEND
-     Aquí se define la ruta de la API bajo tu mismo dominio
-     ========================= */
-  const API_BASE = "/api";
+<!DOCTYPE html>
+<html lang="es">
 
-  /* =========================
-     ESTADO GLOBAL DEL FRONTEND
-     Aquí se guardan imágenes y config cargada desde backend
-     ========================= */
-  let webappConfig = {
-    version: "",
-    email: "",
-    facebook: "",
-    instagram: "",
-    linkedin: "",
-    whatsapp: "",
-    logoPrincipal: "",
-    logoFooter: "",
-    leftImages: [],
-    rightImages: []
-  };
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-  let leftIndex = 0;
-  let rightIndex = 0;
+  <title>COLBIPUNTOS</title>
 
-  /* =========================
-     CONTROLES DE INPUT
-     Mostrar / ocultar la clave
-     ========================= */
-  function toggleView() {
-    const p = document.getElementById("pass-in");
-    p.type = p.type === "password" ? "text" : "password";
-  }
-
-  /* =========================
-     UTILIDAD DE NÚMEROS
-     Limpia texto numérico antes de consultar
-     ========================= */
-  function toNumber(v) {
-    if (v === null || v === undefined || v === "") return 0;
-    if (typeof v === "number") return v;
-
-    let s = String(v).trim();
-    s = s.replace(/[^\d.,-]/g, "");
-
-    if (s.includes(",") && s.includes(".")) {
-      s = s.replace(/\./g, "").replace(",", ".");
-    } else {
-      s = s.replace(/\./g, "");
-      s = s.replace(",", ".");
+  <style>
+    * {
+      box-sizing: border-box;
     }
 
-    const n = Number(s);
-    return isNaN(n) ? 0 : n;
-  }
-
-  /* =========================
-     ESTADO VISUAL DE CARGA
-     Controla botón, loader y resultados
-     ========================= */
-  function setLoadingState(isLoading) {
-    const btn = document.getElementById("btn-send");
-    const load = document.getElementById("loader-box");
-    const res = document.getElementById("res-display");
-
-    if (isLoading) {
-      btn.disabled = true;
-      btn.textContent = "Consultando...";
-      load.style.display = "block";
-      res.style.display = "none";
-    } else {
-      btn.disabled = false;
-      btn.textContent = "Consultar Saldo";
-      load.style.display = "none";
+    /* =========================
+       ESTRUCTURA GENERAL DE LA PÁGINA
+       Controla fondo, fuente y alineación general
+       ========================= */
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #000000;
+      color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
     }
-  }
 
-  /* =========================
-     MENSAJES DE ERROR
-     Muestra errores al usuario
-     ========================= */
-  function mostrarError(mensaje) {
-    const res = document.getElementById("res-display");
-    res.style.display = "block";
-    res.innerHTML = `
-      <div class="box" style="border-color: red; text-align:center;">
-        <b>${mensaje}</b><br>
-        Por favor intente nuevamente.
+    /* =========================
+       ROBAPÁGINAS LATERALES
+       Controla posición y tamaño de las imágenes laterales
+       ========================= */
+    .side-banners {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 240px;
+      height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .side-left {
+      left: 100px;
+    }
+
+    .side-right {
+      right: 100px;
+    }
+
+    .side-banners img {
+      max-width: 150%;
+      max-height: 150%;
+      object-fit: contain;
+      border-radius: 14px;
+      box-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
+      opacity: 0;
+      transition: opacity 0.6s ease-in-out;
+    }
+
+    .side-banners img.visible {
+      opacity: 1;
+    }
+
+    /* =========================
+       CONTENEDOR PRINCIPAL Y TARJETA CENTRAL
+       Controla el espacio de la página y el cuadro principal
+       ========================= */
+    .main-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      padding: 24px 280px 10px 280px;
+    }
+
+    .card {
+      background: #f3f3f3;
+      padding: 1.8rem 1.5rem 2rem 1.5rem;
+      border-radius: 25px;
+      border: 1px solid #333;
+      box-shadow: 0 0 30px rgba(196, 0, 0, 0.22);
+      text-align: center;
+      width: 100%;
+      max-width: 420px;
+    }
+    
+
+    /* =========================
+       LOGO PRINCIPAL
+       Controla tamaño y ubicación del logo superior
+       ========================= */
+    .logo-wrap {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 2px;
+      margin-bottom: 24px;
+    }
+
+    .logo-header {
+      width: 100%;
+      max-width: 300px;
+      height: auto;
+      display: block;
+    }
+
+    /* =========================
+       CAMPOS DE ENTRADA
+       Controla inputs, placeholder y el botón VER
+       ========================= */
+    .input-container {
+      position: relative;
+      margin-bottom: 22px;
+      width: 100%;
+    }
+
+    input {
+      width: 100%;
+      padding: 18px 22px;
+      background: #1a1a1a;
+      border: 1px solid #444;
+      color: white;
+      border-radius: 18px;
+      font-size: 17px;
+      transition: border 0.3s, box-shadow 0.3s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #c40000;
+      box-shadow: 0 0 0 2px rgba(196, 0, 0, 0.18);
+    }
+
+    input::placeholder {
+      color: #888;
+    }
+
+    .eye-icon {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #9d9d9d;
+      font-size: 15px;
+      font-weight: bold;
+      user-select: none;
+    }
+
+    /* =========================
+       BOTÓN CONSULTAR
+       Controla color, tamaño y estados del botón principal
+       ========================= */
+    button#btn-send {
+      width: 100%;
+      padding: 20px;
+      background: #df0000;
+      color: white;
+      border: none;
+      border-radius: 18px;
+      font-weight: 800;
+      font-size: 18px;
+      cursor: pointer;
+      text-transform: uppercase;
+      margin-top: 8px;
+      transition: background 0.3s, transform 0.15s;
+    }
+
+    button#btn-send:hover {
+      background: #c40000;
+    }
+
+    button#btn-send:active {
+      transform: scale(0.995);
+    }
+
+    button:disabled {
+      background: #444 !important;
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    /* =========================
+       LOADER DE CONSULTA
+       Barra de carga cuando se hace una consulta
+       ========================= */
+    #loader-box {
+      display: none;
+      margin-top: 25px;
+      width: 100%;
+    }
+
+    .track {
+      width: 100%;
+      height: 12px;
+      background: #222;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .fill {
+      width: 100%;
+      height: 100%;
+      background-color: #c40000;
+      background-image: linear-gradient(45deg,
+          rgba(255, 255, 255, .2) 25%,
+          transparent 25%,
+          transparent 50%,
+          rgba(255, 255, 255, .2) 50%,
+          rgba(255, 255, 255, .2) 75%,
+          transparent 75%,
+          transparent);
+      background-size: 30px 30px;
+      animation: stripes 1s linear infinite;
+    }
+
+    @keyframes stripes {
+      from {
+        background-position: 0 0;
+      }
+
+      to {
+        background-position: 30px 0;
+      }
+    }
+
+    /* =========================
+       RESULTADOS DE LA CONSULTA
+       Controla las cajas donde aparece el cliente, rango y saldo
+       ========================= */
+    #res-display {
+      margin-top: 20px;
+      display: none;
+      text-align: left;
+      width: 100%;
+    }
+
+    .box {
+      background: #1a1a1a;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      border-left: 5px solid #c40000;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    .label {
+      font-size: 11px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .val {
+      font-size: 16px;
+      font-weight: bold;
+      display: block;
+      margin-top: 4px;
+      line-height: 1.3;
+    }
+
+    .big-val {
+      color: #ff3333;
+      font-size: clamp(1.2rem, 5vw, 1.6rem);
+    }
+
+    /* =========================
+       SOPORTE Y REDES SOCIALES
+       Controla email de soporte y los iconos de redes
+       ========================= */
+    .support {
+      margin-top: 38px;
+      font-size: 13px;
+      color: #a9a9a9;
+      line-height: 1.6;
+    }
+
+    .support-link {
+      text-decoration: none;
+      color: #a9a9a9;
+      cursor: pointer;
+      display: inline-block;
+    }
+
+    .support-link:hover {
+      color: #ffffff;
+    }
+
+    .support-mail {
+      font-weight: 700;
+      text-decoration: underline;
+    }
+
+    .social {
+      margin: 18px 0 0 0;
+      display: flex;
+      justify-content: center;
+      gap: 28px;
+    }
+
+    .social a {
+      color: #8e8e8e;
+      font-size: 22px;
+      transition: 0.25s;
+      text-decoration: none;
+    }
+
+    .social a:hover {
+      color: #c40000;
+    }
+
+    /* =========================
+       BOTÓN WHATSAPP FLOTANTE
+       ========================= */
+    .wa {
+      position: fixed;
+      width: 60px;
+      height: 60px;
+      bottom: 20px;
+      right: 20px;
+      background: #25d366;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      text-decoration: none;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      z-index: 999;
+    }
+
+    /* =========================
+       FOOTER
+       Logo inferior, copyright y versión
+       ========================= */
+    footer {
+      padding: 34px 20px 44px 20px;
+      text-align: center;
+      width: 100%;
+    }
+
+    .f-logo {
+      max-width: 200px;
+      width: 100%;
+      height: auto;
+      margin-bottom: 18px;
+    }
+
+    .copy {
+      font-size: 11px;
+      color: #8d8d8d;
+      letter-spacing: 1px;
+    }
+
+    .version {
+      font-size: 10px;
+      color: #666;
+      margin-top: 8px;
+      letter-spacing: 1px;
+    }
+
+    /* =========================
+       RESPONSIVE
+       Ajustes automáticos para tablet y celular
+       ========================= */
+    @media (max-width: 1200px) {
+      .side-banners {
+        display: none;
+      }
+
+      .main-wrapper {
+        padding: 24px 16px 10px 16px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .card {
+        max-width: 420px;
+        padding: 1.7rem 1.2rem 2rem 1.2rem;
+        border-radius: 25px;
+      }
+
+      .logo-wrap {
+        margin-bottom: 20px;
+      }
+
+      .logo-header {
+        max-width: 300px;
+      }
+
+      input {
+        font-size: 16px;
+        padding: 17px 18px;
+      }
+
+      button#btn-send {
+        font-size: 17px;
+        padding: 18px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .main-wrapper {
+        padding: 18px 14px 8px 14px;
+      }
+
+      .card {
+        padding: 1.4rem 1rem 1.8rem 1rem;
+        border-radius: 24px;
+      }
+
+      .logo-wrap {
+        margin-top: 0;
+        margin-bottom: 18px;
+      }
+
+      .logo-header {
+        max-width: 300px;
+      }
+
+      input {
+        border-radius: 16px;
+        font-size: 15px;
+      }
+
+      button#btn-send {
+        border-radius: 16px;
+        font-size: 16px;
+      }
+
+      .support {
+        margin-top: 30px;
+        font-size: 12px;
+      }
+
+      .social {
+        gap: 22px;
+      }
+
+      .f-logo {
+        max-width: 220px;
+      }
+
+      .wa {
+        width: 56px;
+        height: 56px;
+        font-size: 28px;
+        bottom: 16px;
+        right: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ROBAPÁGINAS IZQUIERDO -->
+  <div class="side-banners side-left">
+    <img id="left-banner" src="" alt="Publicidad izquierda">
+  </div>
+
+  <!-- ROBAPÁGINAS DERECHO -->
+  <div class="side-banners side-right">
+    <img id="right-banner" src="" alt="Publicidad derecha">
+  </div>
+
+  <div class="main-wrapper">
+    <div class="card">
+
+      <!-- LOGO PRINCIPAL -->
+      <div class="logo-wrap">
+        <img id="logo-principal" src="" alt="Colbipuntos Logo" class="logo-header">
       </div>
-    `;
-  }
 
-  /* =========================
-     PRECARGA DE IMÁGENES
-     Sirve para cargar logos y primeros banners antes de mostrarlos
-     ========================= */
-  function precargarImagen(url) {
-    return new Promise((resolve, reject) => {
-      if (!url) {
-        resolve();
-        return;
+      <!-- FORMULARIO DE CONSULTA -->
+      <div class="input-container">
+        <input
+          type="text"
+          id="nit-in"
+          placeholder="NIT de la Empresa"
+          autocomplete="off"
+          inputmode="numeric">
+      </div>
+
+      <div class="input-container">
+        <input
+          type="password"
+          id="pass-in"
+          placeholder="Clave de 4 dígitos"
+          inputmode="numeric"
+          maxlength="4">
+        <span class="eye-icon" onclick="toggleView()">VER</span>
+      </div>
+
+      <button id="btn-send" onclick="ejecutar()">Consultar Saldo</button>
+
+      <!-- LOADER -->
+      <div id="loader-box">
+        <p style="font-size: 12px; color: #888; margin-bottom: 8px;">Conectando con base de datos...</p>
+        <div class="track">
+          <div class="fill"></div>
+        </div>
+      </div>
+
+      <!-- RESULTADOS -->
+      <div id="res-display"></div>
+
+      <!-- SOPORTE -->
+      <div class="support">
+        <a id="support-link" href="#" class="support-link">
+          Para asistencia, contacte al área de Mercadeo:<br>
+          <span id="support-mail" class="support-mail"></span>
+        </a>
+      </div>
+
+      <!-- REDES SOCIALES -->
+      <div class="social">
+        <a id="link-facebook" href="#" target="_blank">
+          <i class="fab fa-facebook"></i>
+        </a>
+        <a id="link-instagram" href="#" target="_blank">
+          <i class="fab fa-instagram"></i>
+        </a>
+        <a id="link-linkedin" href="#" target="_blank">
+          <i class="fab fa-linkedin"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHATSAPP -->
+  <a id="link-whatsapp" href="#" class="wa" target="_blank" aria-label="WhatsApp Colbitumen">
+    <i class="fab fa-whatsapp"></i>
+  </a>
+
+  <!-- FOOTER -->
+  <footer>
+    <img id="logo-footer" src="" class="f-logo" alt="Colbitumen Logo"><br>
+    <span class="copy">&copy; 2026 COLBITUMEN SAS. TODOS LOS DERECHOS RESERVADOS.</span>
+    <div id="version-webapp" class="version"></div>
+  </footer>
+
+  <script>
+    /* =========================
+       CONFIGURACIÓN GENERAL DEL FRONTEND
+       Aquí se define la ruta de la API bajo tu mismo dominio
+       ========================= */
+    const API_BASE = "/api";
+
+    /* =========================
+       ESTADO GLOBAL DEL FRONTEND
+       Aquí se guardan imágenes y config cargada desde backend
+       ========================= */
+    let webappConfig = {
+      version: "",
+      email: "",
+      facebook: "",
+      instagram: "",
+      linkedin: "",
+      whatsapp: "",
+      logoPrincipal: "",
+      logoFooter: "",
+      leftImages: [],
+      rightImages: []
+    };
+
+    let leftIndex = 0;
+    let rightIndex = 0;
+
+    /* =========================
+       CONTROLES DE INPUT
+       Mostrar / ocultar la clave
+       ========================= */
+    function toggleView() {
+      const p = document.getElementById("pass-in");
+      p.type = p.type === "password" ? "text" : "password";
+    }
+
+    /* =========================
+       UTILIDAD DE NÚMEROS
+       Limpia texto numérico antes de consultar
+       ========================= */
+    function toNumber(v) {
+      if (v === null || v === undefined || v === "") return 0;
+      if (typeof v === "number") return v;
+
+      let s = String(v).trim();
+      s = s.replace(/[^\d.,-]/g, "");
+
+      if (s.includes(",") && s.includes(".")) {
+        s = s.replace(/\./g, "").replace(",", ".");
+      } else {
+        s = s.replace(/\./g, "");
+        s = s.replace(",", ".");
       }
 
-      const img = new Image();
-      img.onload = () => resolve(url);
-      img.onerror = () => reject(new Error(`No se pudo cargar la imagen: ${url}`));
-      img.src = url;
-    });
-  }
+      const n = Number(s);
+      return isNaN(n) ? 0 : n;
+    }
 
-  async function precargarRecursosPrincipales(config) {
-    const urlsAprecargar = [
-      config.logoPrincipal,
-      config.logoFooter,
-      config.leftImages?.[0],
-      config.rightImages?.[0]
-    ].filter(Boolean);
+    /* =========================
+       ESTADO VISUAL DE CARGA
+       Controla botón, loader y resultados
+       ========================= */
+    function setLoadingState(isLoading) {
+      const btn = document.getElementById("btn-send");
+      const load = document.getElementById("loader-box");
+      const res = document.getElementById("res-display");
 
-    const resultados = await Promise.allSettled(
-      urlsAprecargar.map(url => precargarImagen(url))
-    );
-
-    resultados.forEach((resultado, i) => {
-      if (resultado.status === "rejected") {
-        console.warn("Falló precarga:", urlsAprecargar[i]);
+      if (isLoading) {
+        btn.disabled = true;
+        btn.textContent = "Consultando...";
+        load.style.display = "block";
+        res.style.display = "none";
+      } else {
+        btn.disabled = false;
+        btn.textContent = "Consultar Saldo";
+        load.style.display = "none";
       }
-    });
-  }
+    }
 
-  /* =========================
-     CARGA DE CONFIGURACIÓN
-     Obtiene logos, redes, banners, WhatsApp, email y versión
-     ========================= */
+    /* =========================
+       MENSAJES DE ERROR
+       Muestra errores al usuario
+       ========================= */
+    function mostrarError(mensaje) {
+      const res = document.getElementById("res-display");
+      res.style.display = "block";
+      res.innerHTML = `
+        <div class="box" style="border-color: red; text-align:center;">
+          <b>${mensaje}</b><br>
+          Por favor intente nuevamente.
+        </div>
+      `;
+    }
+
+    /* =========================
+       CARGA DE CONFIGURACIÓN
+       Obtiene logos, redes, banners, WhatsApp, email y versión
+       ========================= */
+
+  
   async function cargarConfig() {
     try {
       const response = await fetch(`${API_BASE}?action=config&t=${Date.now()}`, {
@@ -161,9 +681,6 @@
       }
 
       webappConfig = result.data;
-
-      await precargarRecursosPrincipales(webappConfig);
-
       aplicarConfigEnPantalla();
       iniciarRotacionBanners();
 
@@ -173,198 +690,160 @@
     }
   }
 
-  /* =========================
-     APLICAR CONFIG EN PANTALLA
-     Inserta logos, links y versión en el HTML
-     ========================= */
-  function aplicarConfigEnPantalla() {
-    const logoPrincipal = document.getElementById("logo-principal");
-    const logoFooter = document.getElementById("logo-footer");
-    const supportMail = document.getElementById("support-mail");
-    const supportLink = document.getElementById("support-link");
-    const linkFacebook = document.getElementById("link-facebook");
-    const linkInstagram = document.getElementById("link-instagram");
-    const linkLinkedin = document.getElementById("link-linkedin");
-    const linkWhatsapp = document.getElementById("link-whatsapp");
-    const versionWebapp = document.getElementById("version-webapp");
+    
+    /* =========================
+       APLICAR CONFIG EN PANTALLA
+       Inserta logos, links y versión en el HTML
+       ========================= */
+    function aplicarConfigEnPantalla() {
+      document.getElementById("logo-principal").src = webappConfig.logoPrincipal || "";
+      document.getElementById("logo-footer").src = webappConfig.logoFooter || "";
 
-    if (logoPrincipal && webappConfig.logoPrincipal) {
-      logoPrincipal.src = webappConfig.logoPrincipal;
-    }
-
-    if (logoFooter && webappConfig.logoFooter) {
-      logoFooter.src = webappConfig.logoFooter;
-    }
-
-    if (supportMail) {
-      supportMail.textContent = webappConfig.email || "";
-    }
-
-    if (supportLink) {
-      supportLink.href = webappConfig.email
+      document.getElementById("support-mail").textContent = webappConfig.email || "";
+      document.getElementById("support-link").href = webappConfig.email
         ? `mailto:${webappConfig.email}?subject=Consulta%20Colbipuntos`
         : "#";
-    }
 
-    if (linkFacebook) linkFacebook.href = webappConfig.facebook || "#";
-    if (linkInstagram) linkInstagram.href = webappConfig.instagram || "#";
-    if (linkLinkedin) linkLinkedin.href = webappConfig.linkedin || "#";
-    if (linkWhatsapp) linkWhatsapp.href = webappConfig.whatsapp || "#";
+      document.getElementById("link-facebook").href = webappConfig.facebook || "#";
+      document.getElementById("link-instagram").href = webappConfig.instagram || "#";
+      document.getElementById("link-linkedin").href = webappConfig.linkedin || "#";
+      document.getElementById("link-whatsapp").href = webappConfig.whatsapp || "#";
 
-    if (versionWebapp) {
-      versionWebapp.textContent = webappConfig.version
+      document.getElementById("version-webapp").textContent = webappConfig.version
         ? `Versión ${webappConfig.version}`
         : "";
     }
-  }
 
-  /* =========================
-     CONSULTA PRINCIPAL
-     Envía NIT y clave al backend
-     ========================= */
-  async function ejecutar() {
-    const nit = toNumber(document.getElementById("nit-in").value.trim());
-    const pass = document.getElementById("pass-in").value.trim();
+    /* =========================
+       CONSULTA PRINCIPAL
+       Envía NIT y clave al backend
+       ========================= */
+    async function ejecutar() {
+      const nit = toNumber(document.getElementById("nit-in").value.trim());
+      const pass = document.getElementById("pass-in").value.trim();
 
-    if (!nit || !pass) {
-      alert("Por favor, ingrese NIT y Clave");
-      return;
-    }
+      if (!nit || !pass) {
+        alert("Por favor, ingrese NIT y Clave");
+        return;
+      }
 
-    setLoadingState(true);
+      setLoadingState(true);
 
-    try {
-      const response = await fetch(API_BASE, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          action: "buscarCliente",
-          nit: String(nit),
-          codigo: pass
-        })
-      });
-
-      const rawText = await response.text();
-      console.log("Respuesta cruda consulta:", rawText);
-
-      let result;
       try {
-        result = JSON.parse(rawText);
-      } catch (parseError) {
-        console.error("No se pudo parsear JSON de consulta:", parseError);
+        const response = await fetch(API_BASE, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            action: "buscarCliente",
+            nit: String(nit),
+            codigo: pass
+          })
+        });
+
+        const result = await response.json();
+
         setLoadingState(false);
-        mostrarError("La API devolvió una respuesta inválida.");
-        return;
+
+        const res = document.getElementById("res-display");
+        res.style.display = "block";
+
+        if (!result.ok || !result.data) {
+          mostrarError(result.message || "Datos incorrectos.");
+          return;
+        }
+
+        const data = result.data;
+
+        const moneda = new Intl.NumberFormat("es-CO", {
+          style: "currency",
+          currency: "COP",
+          maximumFractionDigits: 0
+        });
+
+        res.innerHTML = `
+          <div class="box">
+            <span class="label">Cliente</span>
+            <span class="val">${data.razon}</span>
+          </div>
+          <div class="box">
+            <span class="label">Rango</span>
+            <span class="val">${data.rango}</span>
+          </div>
+          <div class="box" style="background: #250a0a;">
+            <span class="label">Saldo Disponible</span>
+            <span class="val big-val">${moneda.format(data.saldo)}</span>
+          </div>
+        `;
+
+      } catch (error) {
+        console.error("Error consultando cliente:", error);
+        setLoadingState(false);
+        mostrarError("Error de conexión con el servidor.");
       }
-
-      setLoadingState(false);
-
-      const res = document.getElementById("res-display");
-      res.style.display = "block";
-
-      if (!result.ok || !result.data) {
-        mostrarError(result.message || "Datos incorrectos.");
-        return;
-      }
-
-      const data = result.data;
-
-      const moneda = new Intl.NumberFormat("es-CO", {
-        style: "currency",
-        currency: "COP",
-        maximumFractionDigits: 0
-      });
-
-      res.innerHTML = `
-        <div class="box">
-          <span class="label">Cliente</span>
-          <span class="val">${data.razon}</span>
-        </div>
-        <div class="box">
-          <span class="label">Rango</span>
-          <span class="val">${data.rango}</span>
-        </div>
-        <div class="box" style="background: #250a0a;">
-          <span class="label">Saldo Disponible</span>
-          <span class="val big-val">${moneda.format(data.saldo)}</span>
-        </div>
-      `;
-
-    } catch (error) {
-      console.error("Error consultando cliente:", error);
-      setLoadingState(false);
-      mostrarError("Error de conexión con el servidor.");
     }
-  }
 
-  /* =========================
-     ROBAPÁGINAS
-     Controla la rotación de banners laterales
-     ========================= */
-  function mostrarBanner(imgElementId, imageArray, index) {
-    const img = document.getElementById(imgElementId);
-    if (!img || !imageArray.length) return;
+    /* =========================
+       ROBAPÁGINAS
+       Controla la rotación de banners laterales
+       ========================= */
+    function mostrarBanner(imgElementId, imageArray, index) {
+      const img = document.getElementById(imgElementId);
+      if (!img || !imageArray.length) return;
 
-    img.classList.remove("visible");
+      img.classList.remove("visible");
 
-    const siguienteUrl = imageArray[index];
-    const precarga = new Image();
+      setTimeout(() => {
+        img.src = imageArray[index];
+        img.classList.add("visible");
+      }, 250);
+    }
 
-    precarga.onload = () => {
-      img.src = siguienteUrl;
-      img.classList.add("visible");
-    };
+    function iniciarRotacionBanners() {
+      if (window.innerWidth <= 1200) return;
+      if (!webappConfig.leftImages.length && !webappConfig.rightImages.length) return;
 
-    precarga.onerror = () => {
-      console.warn("No se pudo cargar banner:", siguienteUrl);
-    };
-
-    precarga.src = siguienteUrl;
-  }
-
-  function iniciarRotacionBanners() {
-    if (window.innerWidth <= 1200) return;
-    if (!webappConfig.leftImages.length && !webappConfig.rightImages.length) return;
-
-    if (webappConfig.leftImages.length) {
-      mostrarBanner("left-banner", webappConfig.leftImages, leftIndex);
-
-      setInterval(() => {
-        leftIndex = (leftIndex + 1) % webappConfig.leftImages.length;
+      if (webappConfig.leftImages.length) {
         mostrarBanner("left-banner", webappConfig.leftImages, leftIndex);
-      }, 6000);
-    }
 
-    if (webappConfig.rightImages.length) {
-      mostrarBanner("right-banner", webappConfig.rightImages, rightIndex);
+        setInterval(() => {
+          leftIndex = (leftIndex + 1) % webappConfig.leftImages.length;
+          mostrarBanner("left-banner", webappConfig.leftImages, leftIndex);
+        }, 6000);
+      }
 
-      setInterval(() => {
-        rightIndex = (rightIndex + 1) % webappConfig.rightImages.length;
+      if (webappConfig.rightImages.length) {
         mostrarBanner("right-banner", webappConfig.rightImages, rightIndex);
-      }, 6000);
-    }
-  }
 
-  /* =========================
-     EVENTOS DE TECLADO Y ARRANQUE
-     Carga config al abrir y permite consultar con Enter
-     ========================= */
-  document.addEventListener("DOMContentLoaded", function () {
-    const nitInput = document.getElementById("nit-in");
-    const passInput = document.getElementById("pass-in");
-
-    function manejarEnter(e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        ejecutar();
+        setInterval(() => {
+          rightIndex = (rightIndex + 1) % webappConfig.rightImages.length;
+          mostrarBanner("right-banner", webappConfig.rightImages, rightIndex);
+        }, 6000);
       }
     }
 
-    nitInput.addEventListener("keydown", manejarEnter);
-    passInput.addEventListener("keydown", manejarEnter);
+    /* =========================
+       EVENTOS DE TECLADO Y ARRANQUE
+       Carga config al abrir y permite consultar con Enter
+       ========================= */
+    document.addEventListener("DOMContentLoaded", function () {
+      const nitInput = document.getElementById("nit-in");
+      const passInput = document.getElementById("pass-in");
 
-    cargarConfig();
-  });
-</script>
+      function manejarEnter(e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          ejecutar();
+        }
+      }
+
+      nitInput.addEventListener("keydown", manejarEnter);
+      passInput.addEventListener("keydown", manejarEnter);
+
+      cargarConfig();
+    });
+  </script>
+
+</body>
+</html>
