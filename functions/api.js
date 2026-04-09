@@ -12,7 +12,7 @@ export async function onRequest(context) {
   const action = incomingUrl.searchParams.get("action") || "";
 
   try {
-    APPS_SCRIPT_URL = getCleanUrl();
+   const APPS_SCRIPT_URL = getCleanUrl();
 
     // Ruta de diagnóstico
     if (action === "debug") {
